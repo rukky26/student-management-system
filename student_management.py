@@ -1,3 +1,10 @@
+"""
+Student Management System
+
+A command-line application for managing student records.
+Student data is stored locally in a JSON file.
+"""
+
 import json
 
 
@@ -5,10 +12,14 @@ FILE_NAME = "students.json"
 
 
 def load_students():
+    """Load student records from the JSON file."""
     try:
         with open(FILE_NAME, "r") as file:
             return json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        print("Warning: Student data file is corrupted.")
         return []
 
 
@@ -16,6 +27,7 @@ students = load_students()
 
 
 def get_non_empty_input(prompt):
+    """Request input from the user until a non-empty value is provided."""
     while True:
         value = input(prompt).strip()
 
@@ -26,6 +38,7 @@ def get_non_empty_input(prompt):
 
 
 def get_level():
+    """Request and validate a university student level."""
     while True:
         level = input("Enter level: ").strip()
 
@@ -36,16 +49,21 @@ def get_level():
 
 
 def save_students():
-    with open(FILE_NAME, "w") as file:
-        json.dump(students, file, indent=4)
+    """Save student records to the JSON file."""
+    try:
+        with open(FILE_NAME, "w") as file:
+            json.dump(students, file, indent=4)
+    except OSError:
+        print("Error: Unable to save student data.")
 
 
 def add_student():
+    """Add a new student to the system."""
     print("\n--- Add Student ---")
 
-    name = get_non_empty_input("Enter student name: ")
-    matric_number = get_non_empty_input("Enter matric number: ")
-    department = get_non_empty_input("Enter department: ")
+    name = get_non_empty_input("Enter student name: ").title()
+    matric_number = get_non_empty_input("Enter matric number: ").upper()
+    department = get_non_empty_input("Enter department: ").title()
     level = get_level()
 
     for student in students:
@@ -67,6 +85,7 @@ def add_student():
 
 
 def view_students():
+    """Display all registered students."""
     print("\n--- Student List ---")
 
     if not students:
@@ -82,9 +101,10 @@ def view_students():
 
 
 def search_student():
+    """Search for a student using their matriculation number."""
     print("\n--- Search Student ---")
 
-    matric_number = input("Enter matric number: ").strip()
+    matric_number = get_non_empty_input("Enter matric number: ").upper()
 
     for student in students:
         if student["matric_number"] == matric_number:
@@ -95,20 +115,21 @@ def search_student():
             print(f"Level: {student['level']}")
             return
 
-    print("Student not found.")
+    print("\nStudent not found.")
 
 
 def update_student():
+    """Update an existing student's information."""
     print("\n--- Update Student ---")
 
-    matric_number = input(
+    matric_number = get_non_empty_input(
         "Enter matric number of student to update: "
-    ).strip()
+    ).upper()
 
     for student in students:
         if student["matric_number"] == matric_number:
             print("\nStudent Found!")
-            print("Leave a field empty if you don't want to change it.")
+            print("Press Enter to keep the current value.\n")
 
             new_name = input(
                 f"Enter new name [{student['name']}]: "
@@ -123,13 +144,13 @@ def update_student():
             ).strip()
 
             if new_name:
-                student["name"] = new_name
+                student["name"] = new_name.title()
 
             if new_department:
-                student["department"] = new_department
+                student["department"] = new_department.title()
 
             if new_level:
-                if new_level.isdigit() and int(new_level) > 0:
+                if new_level in {"100", "200", "300", "400", "500", "600"}:
                     student["level"] = new_level
                 else:
                     print("Invalid level. Level was not changed.")
@@ -143,24 +164,38 @@ def update_student():
 
 
 def delete_student():
+    """Delete a student after confirmation."""
     print("\n--- Delete Student ---")
 
-    matric_number = input(
+    matric_number = get_non_empty_input(
         "Enter matric number of student to delete: "
-    ).strip()
+    ).upper()
 
     for student in students:
         if student["matric_number"] == matric_number:
-            students.remove(student)
-            save_students()
+            print("\nStudent Found!")
+            print(f"Name: {student['name']}")
+            print(f"Department: {student['department']}")
+            print(f"Level: {student['level']}") 
 
-            print("Student deleted successfully!")
-            return
+            confirmation = input(
+                "\nAre you sure you want to delete this student? (y/n): "
+            ).strip().lower()
+
+            if confirmation == "y":
+                students.remove(student)
+                save_students()
+                print("\nStudent deleted successfully!")
+            else:
+                print("\nDeletion cancelled.")
+
+            return        
 
     print("Student not found.")
 
 
 def main():
+    """Run the main application menu."""
     while True:
         print("\n===== STUDENT MANAGEMENT SYSTEM =====")
         print("1. Add Student")
@@ -189,4 +224,5 @@ def main():
             print("Invalid choice. Please try again.")
 
 
-main()
+if __name__ == "__main__":
+    main()
